@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>何宁 · 嵌入式驱动软件设计师</title>
+<meta name="description" content="何宁，嵌入式驱动软件设计师。专注底层驱动、Linux 内核与硬件接口。">
+<meta name="theme-color" content="#e8f1fb">
+<!-- 如果想让中文衬线体在所有设备上一致，可取消下面这行的注释（需要能访问 Google Fonts）：
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet">
+-->
+<style>
+  :root{
+    --bg:#e8f1fb;
+    --surface:rgba(255,255,255,.55);
+    --surface-hover:rgba(255,255,255,.85);
+    --text:#12283f;
+    --muted:#4a6b8a;
+    --line:rgba(18,40,63,.13);
+    --accent:#1d6fd0;
+    --accent-2:#5aa9e6;
+    --accent-soft:rgba(29,111,208,.12);
+    --font:Georgia,"Times New Roman","Source Han Serif SC","Source Han Serif CN","Noto Serif SC","思源宋体","Songti SC","STSong","STZhongsong","SimSun",serif;
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    min-height:100dvh;
+    display:flex;
+    padding:clamp(2.5rem,7vw,5rem) clamp(1.25rem,5vw,2rem);
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    font-size:16px;
+    line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  ::selection{background:rgba(29,111,208,.22);color:#0d1f33}
+
+  /* ---------- 背景：缓慢流动的渐变 ---------- */
+  /* 层 1：底色渐变，靠 background-position 缓慢漂移 */
+  body::before{
+    content:"";
+    position:fixed;inset:0;z-index:0;
+    background:linear-gradient(125deg,#eaf3fd 0%,#d7e8fb 28%,#cfe2f7 52%,#e2eefc 74%,#eff6fd 100%);
+    background-size:400% 400%;
+    animation:drift 22s ease-in-out infinite;
+  }
+  /* 层 2：三团模糊光晕，缓慢漂浮 */
+  body::after{
+    content:"";
+    position:fixed;inset:-15%;z-index:0;
+    pointer-events:none;
+    background:
+      radial-gradient(38% 42% at 18% 24%,rgba(88,166,232,.42),transparent 66%),
+      radial-gradient(36% 40% at 82% 16%,rgba(138,166,255,.40),transparent 67%),
+      radial-gradient(42% 46% at 64% 84%,rgba(110,214,214,.34),transparent 68%);
+    filter:blur(48px);
+    will-change:transform;
+    animation:float 15s ease-in-out infinite alternate;
+  }
+  @keyframes drift{
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+  }
+  @keyframes float{
+    from{transform:translate3d(-2.5%,-1.5%,0) scale(1.04)}
+    to{transform:translate3d(3.5%,2.5%,0) scale(1.16)}
+  }
+
+  .page{
+    margin:auto;            /* 内容不足一屏时居中，超出时正常滚动 */
+    width:100%;
+    max-width:44rem;
+    position:relative;
+    z-index:1;
+  }
+
+  /* ---------- 头部 ---------- */
+  .avatar{
+    width:4.75rem;height:4.75rem;
+    padding:2px;
+    border-radius:50%;
+    background:linear-gradient(140deg,var(--accent),var(--accent-2));
+    box-shadow:0 12px 34px -12px rgba(29,111,208,.55);
+  }
+  .avatar span{
+    display:grid;place-items:center;
+    width:100%;height:100%;
+    border-radius:50%;
+    background:#ffffff;
+    color:var(--accent);
+    font-size:1.85rem;line-height:1;font-weight:500;
+    user-select:none;
+  }
+
+  .pill{
+    display:inline-flex;align-items:center;gap:.5rem;
+    margin:1.7rem 0 0;
+    padding:.32rem .9rem;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:var(--surface);
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    color:var(--muted);
+    font-size:.76rem;
+    letter-spacing:.12em;
+  }
+  .pill::before{
+    content:"";
+    width:.42rem;height:.42rem;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+
+  .name{
+    margin:1.15rem 0 0;
+    font-size:clamp(2.3rem,7.5vw,3.15rem);
+    font-weight:500;
+    line-height:1.25;
+    letter-spacing:.08em;
+  }
+  @supports (background-clip:text) or (-webkit-background-clip:text){
+    .name{
+      background:linear-gradient(100deg,#0e2338 26%,var(--accent) 118%);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+  }
+
+  .role{
+    margin:.6rem 0 0;
+    color:var(--accent);
+    font-size:clamp(.95rem,2.6vw,1.06rem);
+    font-weight:500;
+    letter-spacing:.18em;
+  }
+
+  .lead{
+    margin:1.4rem 0 0;
+    max-width:30rem;
+    font-size:clamp(1rem,2.8vw,1.13rem);
+    line-height:2;
+    color:#1d3a5c;
+  }
+
+  /* ---------- 关于我 ---------- */
+  .about{
+    margin-top:clamp(2.5rem,6vw,3.5rem);
+    padding-top:2rem;
+    border-top:1px solid var(--line);
+  }
+  .about h2{
+    margin:0 0 .9rem;
+    font-size:.78rem;
+    font-weight:400;
+    letter-spacing:.3em;
+    color:var(--accent);
+    opacity:.85;
+  }
+  .about p{
+    margin:0;
+    max-width:36rem;
+    color:var(--muted);
+    font-size:.97rem;
+    line-height:2.1;
+  }
+
+  /* ---------- 页脚 ---------- */
+  .footer{
+    margin-top:clamp(2.5rem,6vw,3.5rem);
+    padding-top:2rem;
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:1.1rem 1.5rem;
+  }
+  .socials{display:flex;gap:.6rem}
+  .socials a{
+    width:2.6rem;height:2.6rem;
+    border-radius:.85rem;
+    display:grid;place-items:center;
+    color:var(--muted);
+    background:var(--surface);
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line);
+    text-decoration:none;
+    transition:transform .22s cubic-bezier(.2,.7,.3,1),color .22s,border-color .22s,background-color .22s,box-shadow .22s;
+  }
+  .socials a:hover,
+  .socials a:focus-visible{
+    color:var(--accent);
+    background:var(--surface-hover);
+    border-color:rgba(29,111,208,.45);
+    box-shadow:0 10px 22px -10px rgba(29,111,208,.55);
+    transform:translateY(-3px);
+  }
+  .socials a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .socials svg{width:1.15rem;height:1.15rem;display:block}
+  .glyph{font-size:1.02rem;font-weight:500;line-height:1}
+
+  .copy{
+    margin:0;
+    color:var(--muted);
+    font-size:.8rem;
+    letter-spacing:.1em;
+    opacity:.75;
+  }
+
+  /* ---------- 入场动画 ---------- */
+  @keyframes rise{
+    from{opacity:0;transform:translateY(14px)}
+    to{opacity:1;transform:none}
+  }
+  .rise{animation:rise .9s cubic-bezier(.2,.7,.3,1) both;animation-delay:var(--d,0s)}
+
+  @media (prefers-reduced-motion: reduce){
+    .rise{animation:none}
+    body::before,body::after{animation:none}
+    .socials a{transition:none}
+    .socials a:hover{transform:none}
+  }
+
+  @media (max-width:480px){
+    .avatar{width:4rem;height:4rem}
+    .avatar span{font-size:1.55rem}
+    .socials a{width:2.45rem;height:2.45rem;border-radius:.75rem}
+    .footer{justify-content:flex-start}
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="avatar rise" style="--d:0s"><span>何</span></div>
+    <p class="pill rise" style="--d:.06s">嵌入式 · 驱动开发</p>
+    <h1 class="name rise" style="--d:.12s">何宁</h1>
+    <p class="role rise" style="--d:.18s">嵌入式驱动软件设计师</p>
+    <p class="lead rise" style="--d:.24s">在硬件与操作系统之间，写让设备稳定运行的代码。</p>
+  </header>
+
+  <section class="about rise" style="--d:.32s">
+    <h2>关于我</h2>
+    <p>
+      我是一名嵌入式驱动软件设计师，日常与芯片手册、寄存器、总线和内核源码打交道。从裸机 MCU 到 Linux
+      内核，我做的事是把硬件的能力翻译成上层可以信赖的接口——写驱动、移植 BSP、对着示波器调时序、在中断
+      延迟与功耗之间找平衡。我相信稳定来自对细节的耐心：一行注释清楚的代码，胜过十页没人看的文档。
+    </p>
+  </section>
+
+  <footer class="footer rise" style="--d:.4s">
+    <nav class="socials" aria-label="社交媒体链接">
+      <!-- TODO: 把下面每个 href="#" 换成你自己的主页地址 -->
+      <a href="#" aria-label="GitHub" title="GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.21 3.44 9.63 8.21 11.19.6.11.82-.25.82-.56 0-.28-.01-1.02-.02-2-3.34.71-4.04-1.58-4.04-1.58-.55-1.37-1.34-1.74-1.34-1.74-1.09-.73.08-.72.08-.72 1.21.08 1.84 1.22 1.84 1.22 1.07 1.8 2.81 1.28 3.5.98.11-.76.42-1.28.76-1.58-2.67-.29-5.47-1.31-5.47-5.83 0-1.29.47-2.34 1.24-3.17-.13-.29-.54-1.5.12-3.12 0 0 1.01-.32 3.3 1.21a11.6 11.6 0 0 1 6 0c2.29-1.53 3.3-1.21 3.3-1.21.66 1.62.25 2.83.12 3.12.77.83 1.24 1.88 1.24 3.17 0 4.53-2.81 5.53-5.49 5.82.43.37.81 1.1.81 2.22 0 1.6-.01 2.9-.01 3.29 0 .31.21.68.83.56A12.02 12.02 0 0 0 24 12.29C24 5.78 18.63.5 12 .5Z"/>
+        </svg>
+      </a>
+      <a href="#" aria-label="知乎" title="知乎">
+        <span class="glyph" aria-hidden="true">知</span>
+      </a>
+      <a href="#" aria-label="掘金" title="掘金">
+        <span class="glyph" aria-hidden="true">掘</span>
+      </a>
+      <a href="#" aria-label="邮箱" title="邮箱">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2.5"/>
+          <path d="m3.6 7.2 8.4 6 8.4-6"/>
+        </svg>
+      </a>
+    </nav>
+    <p class="copy">© 2026 何宁</p>
+  </footer>
+
+</main>
+</body>
+</html>
